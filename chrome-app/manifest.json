@@ -1,0 +1,19 @@
+{
+  "name": "Arduino Worlves",
+  "description": "Config tool for Arduino Worlves.",
+  "version": "0.1",
+  "manifest_version": 2,
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  },
+  "icons": {
+      "16": "assets/icon-mhn-16.png",
+      "128": "assets/icon-mhn-128.png"
+  },
+  "permissions": [
+      "serial",
+      "http://*.google.com/"
+  ]
+}

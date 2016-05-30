@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="/css/fonts.css">
+    <link rel="stylesheet" type="text/css" href="/vendor/semantic/dist/semantic.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/app.css">
+
+</head>
+
+<body>
+<div id="window">
+    <div class="container">
+
+        <div class="ui text shape">
+            <div class="sides">
+                <div class="active side">
+                    <h1 class="side-title">Genuino Setup</h1>
+                    <div class="arduinologo">
+                        <img src="/assets/genuino.svg">
+                    </div>
+
+                    <div class="ui form">
+                        <div class="field">
+                            <label>Port</label>
+                            <select class="ui dropdown" id="port-picker"></select>
+                        </div>
+
+                        <div class="field">
+                            <label>Status</label>
+                        <span class="status ui large label" style="width: 100%"><i class="lightning icon"></i>
+                            Connecting...</span>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button id="connect-button" class="ui green submit disabled button">Connect</button>
+                        <button id="rescan-button" class="flip-btn ui blue submit button">Rescan ports</button>
+                    </div>
+                </div>
+
+                <div class="side">
+                    <h1 class="side-title">Wolves Setup</h1>
+                    <div class="ui form">
+                        <div class="field">
+                            <label>Status</label>
+                        <span class="status ui teal large label"><i class="lightning icon"></i>Connecting..
+                            .</span>
+                        </div>
+
+                        <div class="field">
+                            <label>PIN Code</label>
+                            <input type="text" name="pincode" placeholder="Pin Code (1234)">
+                        </div>
+                        <div class="field">
+                            <label>Duration of Feedback (in ms)</label>
+                            <input type="text" name="df" placeholder="Duration of Feedback">
+                        </div>
+                        <div class="field">
+                            <label>Durtion of Impuls (in ms)</label>
+                            <input type="text" name="di" placeholder="Durtion of Impuls">
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <button id="submit-button" class="ui blue submit disabled button">Submit</button>
+                        <button id="reset-button" class=" flip-btn ui red submit button">Reset Arduino</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/vendor/js/jquery-2.2.3.min.js"></script>
+<!--<script src="/vendor/semantic/dist/semantic.min.js"></script>-->
+<script src="/js/bundle.js"></script>
+
+</body>
+
+</html>

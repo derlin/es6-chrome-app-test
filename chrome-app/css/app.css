@@ -1,0 +1,55 @@
+#window {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    width: 400px;
+    height: 500px;
+}
+
+.container {
+    position: relative;
+}
+
+.container, .shape, .sides, .side, .side.active {
+    height: 100%;
+}
+
+.container, .shape {
+    width: 100%;
+}
+
+.side {
+    padding: 20px 15px;
+    border: 1px solid gray;
+    border-radius: 6px;
+
+}
+
+.arduinologo {
+    margin-top: 40px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.arduinologo img {
+    width: 60%;
+    display: table;
+    margin: 0 auto;
+}
+
+.ui.button {
+    transition: none !important;
+}
+
+.side-title {
+    padding-bottom: .21428571rem;
+    border-bottom: 1px solid rgba(34,36,38,.15);
+}
+
+.btn-group{
+    position: absolute;
+    bottom: 20px;
+    right: 15px;
+}
