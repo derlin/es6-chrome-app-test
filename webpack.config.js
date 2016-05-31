@@ -13,10 +13,15 @@ module.exports = {
                 loader: 'babel-loader',
                 test: path.join(__dirname, 'es6'),
                 query: {
-                  presets: 'es2015',
-                },
+                  presets: 'es2015'
+                }
             }
         ]
+    },
+    resolve: {
+      alias: {
+          'jquery' : path.join(__dirname, 'chrome-app/vendor/jquery-2.2.3.min.js')
+      }
     },
     plugins: [
         // Avoid publishing files when compilation fails
@@ -27,5 +32,5 @@ module.exports = {
         colors: true
     },
     // Create Sourcemaps for the bundle
-    devtool: 'source-map',
+    devtool: 'source-map'
 };

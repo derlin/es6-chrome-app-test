@@ -7,7 +7,7 @@ class PortManager {
     eligiblePorts(){
         return new Promise( ( resolve ) =>{
             chrome.serial.getDevices( ( ports ) =>{
-                ports.filter( p => !p.path.match( /[Bb]luetooth/ ) );
+                ports = ports.filter( p => !p.path.match( /[Bb]luetooth/ ) );
                 resolve( ports );
             } );
         } );

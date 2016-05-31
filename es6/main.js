@@ -1,7 +1,6 @@
-// jQuery for all
-
-let $ = require( "jquery" );
+var $ = require( "jquery" );
 $.fn.shape = require( 'semantic-ui-shape' );
+window.$ = $;
 import PortManager from './PortManager.js';
 import StatusText from './StatusText.js';
 
@@ -10,15 +9,17 @@ var select = $( "#port-picker" );
 var btnConnect = $( "#connect-button" );
 var btnRescan = $( "#rescan-button" );
 var status = new StatusText( ".ui.status", "not connected", "", "unlink" );
-var shape = $( ".shape" );
+var shaper = $( ".shape" );
 
 let DEFAULT_TRANSITION = "flip over";
 
-shape.shape( {debug: false, duration: 1000} );
+shaper.shape( {} );
 
 
 select.on( 'change', selectChanged );
-btnConnect.on( 'click', connect );
+// btnConnect.on( 'click', connect );
+btnConnect.on( 'click', connect);
+
 btnRescan.on( 'click', rescan );
 rescan();
 
@@ -27,7 +28,7 @@ function createPortPicker( ports ){
     select.html( "" ); // clear
     ports.forEach( ( port ) =>{
         // add ports
-        var option = `<option value='${ port.displayName || port.path }'>${ port.path }</option>`;
+        var option = `<option value='${ port.path }'>${ port.displayName ? port.displayName + ' (' + port.path + ')' : port.path }</option>`;
         select.append( $( option ) );
     } );
     btnRescan.removeClass( "disabled" );
@@ -51,7 +52,10 @@ function rescan(){
 function connect(){
     status.update( "connecting", "teal", "spinner" );
     pm.openPort( select.val() ).then(
-        () => $( 'shape' ).shape( DEFAULT_TRANSITION ),
+        () =>{
+            shaper.shape( DEFAULT_TRANSITION );
+            status.update( "connected", "green", "linkify" )
+        },
         ( error ) => status.update( error, "red", "warning circle" )
     );
 }

@@ -1,9 +1,10 @@
-let $ = require( 'jquery' );
+var $ = require( 'jquery' );
 
 class StatusText {
 
     constructor( selector, msg, color, icon ){
         this.element = $( selector );
+        console.log(this.element);
         this.update( msg, color, icon );
     }
 

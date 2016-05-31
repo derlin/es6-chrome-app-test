@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
-    "watch": "webpack --watch"
+    "watch": "webpack -d --watch",
+    "minimize": "webpack -p",
+    "clean": "webpack clean"
   },
   "devDependencies": {
     "babel-core": "^6.0.20",
