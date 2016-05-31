@@ -1,29 +1,43 @@
 class PortManager {
 
     constructor(){
-        this.connectionId = -1;
+        this._connectionInfo = null;
+        this._events = {
+            onConnect   : new chrome.Event(),
+            onDisconnect: new chrome.Event()
+        };
+        this._ports = null;
     }
 
-    eligiblePorts(){
+    scanPorts(){
+        let self = this;
         return new Promise( ( resolve ) =>{
             chrome.serial.getDevices( ( ports ) =>{
-                ports = ports.filter( p => !p.path.match( /[Bb]luetooth/ ) );
+                self._ports = ports.filter( p => !p.path.match( /[Bb]luetooth/ ) );
                 resolve( ports );
             } );
         } );
     }
 
+    getPorts(){
+        return this._ports;
+    }
 
-    openPort( selectedPort ){
+
+    connect( selectedPort ){
         let self = this;
         return new Promise( ( resolve, reject ) =>{
 
-            let connect = () => chrome.serial.connect( selectedPort, () =>{
-                this._ifChromeError( reject, resolve );
+            let connect = () => chrome.serial.connect( selectedPort, ( connectionInfo ) =>{
+                this._ifChromeError( reject, () =>{
+                    self._connectionInfo = connectionInfo;
+                    self._events.onConnect.dispatch( connectionInfo );
+                    resolve();
+                } );
             } );
 
-            if( self.connectionId != -1 ){
-                chrome.serial.disconnect( self.connectionId, () =>{
+            if( self._connectionInfo ){
+                chrome.serial.disconnect( self._connectionInfo.connectionId, () =>{
                     this._ifChromeError( reject, connect )
                 } );
 
@@ -34,14 +48,19 @@ class PortManager {
     }
 
     disconnect(){
+        let self = this;
         return new Promise( ( resolve ) =>{
-            let self = this;
-            chrome.serial.disconnect( self.connectionId, () =>{
-                self.connectionId = -1;
+            chrome.serial.disconnect( self._connectionInfo.connectionId, () =>{
+                self._connectionInfo = null;
+                self._events.onDisconnect.dispatch();
                 resolve();
             } );
 
         } );
+    }
+
+    getInfo(){
+        return this._connectionInfo;
     }
 
     _ifChromeError( reject, proceed ){
