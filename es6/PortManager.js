@@ -32,7 +32,7 @@ class PortManager {
                 this._ifChromeError( reject, () =>{
                     self._connectionInfo = connectionInfo;
                     self.events.onConnect.dispatch( connectionInfo );
-                    resolve( connectionInfo );
+                    resolve();
                 } );
             } );
 

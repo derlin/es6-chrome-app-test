@@ -6,7 +6,7 @@ class Serial {
         this.events = {
             onReceive      : new chrome.Event(),
             onReceivedError: new chrome.Event(),
-            onSendError    : new chrome.Event()
+            onSendError    : new chrome.Event(),
         };
 
         this._connectionInfo = connectionInfo;
@@ -23,6 +23,7 @@ class Serial {
         this.resetArduino();
         console.log( "serial created ", this._connectionInfo );
     }
+
 
     // -------------------------------------- chrome serial listeners
 

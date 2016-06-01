@@ -3,25 +3,39 @@ $.fn.shape = require( 'semantic-ui-shape' );
 window.$ = $;
 
 
-import PortManager from './PortManager.js';
+import WolfSerial from './WolfSerial.js';
 import StatusText from './StatusText.js';
-import Serial from './Serial.js';
-import * as asnl from './Asnl.js';
 
 // ----------------------------------------------------
 
-var pm = new PortManager();
+var serial = new WolfSerial();
 var portPicker = $( "#port-picker" );
 var btnConnect = $( "#connect-button" );
 var btnDisconnect = $( "#disconnect-button" );
 var btnRescan = $( "#rescan-button" );
 var shaper = $( ".shape" );
 
-var serial = null;
+
 var status = new StatusText( ".ui.status", "not connected", "", "unlink" );
 
 var DEFAULT_TRANSITION = "flip over";
 
+
+serial.events.onArduinoReady.addListener( () =>{
+    console.log( "arduino ready" );
+    serial.setPin( "123" ).then( ( res ) =>{
+        console.log( "set pin ", res );
+        serial.dump().then( ( res ) => console.log( "dump ", res ) );
+    } );
+} );
+
+serial.events.onConnect.addListener( () =>{
+    console.log( "connect event received" );
+} );
+
+serial.events.onDisconnect.addListener( () =>{
+    console.log( "disconnect event received" );
+} );
 // ----------------------------------------------------
 
 shaper.shape( {} );
@@ -56,29 +70,27 @@ function portSelectedChanged(){
 function rescan(){
     btnConnect.addClass( "disabled" );
     btnRescan.addClass( "disabled" );
-    pm.scanPorts().then( createPortPicker );
+    serial.scanPorts().then( createPortPicker );
 }
 
 
 function connect(){
     status.update( "connecting", "teal", "spinner" );
-    pm.connect( portPicker.val() ).then(
-        (connectionInfo) =>{
-            serial = new Serial(connectionInfo);
+    serial.connect( portPicker.val() ).then(
+        ( connectionInfo ) =>{
             shaper.shape( DEFAULT_TRANSITION );
             status.update( "connected", "green", "linkify" );
+            serial.initiateArduinoTalk();
         },
         ( error ) => status.update( error, "red", "warning circle" )
     );
 }
 
 function disconnect(){
-    if(serial != null){
-        status.update("disconnected", "", "unlink");
-        serial.finalize();
-        serial = null;
-        pm.disconnect();
-        shaper.shape(DEFAULT_TRANSITION);
+    if( serial != null ){
+        status.update( "disconnected", "", "unlink" );
+        serial.disconnect();
+        shaper.shape( DEFAULT_TRANSITION );
     }
 }
 // ----------------------------------------------------

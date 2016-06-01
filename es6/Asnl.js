@@ -39,7 +39,6 @@ class AsnlStruct {
     }
 
     static fromAsnl( buffer ){
-        console.log( "parsing STRUCT ", buffer );
         var len = buffer[0];
         var cursor = 1;
         var values = [];
@@ -51,7 +50,6 @@ class AsnlStruct {
                 console.log( "error parsing object | cursor: " + cursor, buffer );
                 return null;
             }
-            console.log( "  struct: parsed", obj );
             values.push( obj );
 
             // add len + type field + size field
@@ -82,8 +80,11 @@ class AsnlInt {
 
     static fromAsnl( buffer ){
         var len = buffer[0];
-        console.log( "parsing INT of size " + len, buffer );
-        var value = byteArrayToInt( buffer.slice( 1 ), len + 1 );
+        var value = byteArrayToInt( buffer.slice( 1 ), len );
+        var negLimit = 1 << ((8 * len) - 1);
+        if( value >= negLimit ){ // if negative
+            value = value - (negLimit << 1);
+        }
         return new AsnlInt( value, len );
     }
 }
@@ -102,11 +103,7 @@ class AsnlUint {
 
     static fromAsnl( buffer ){
         var len = buffer[0];
-        console.log( "parsing UINT of size " + len, buffer );
         var value = byteArrayToInt( buffer.slice( 1 ), len );
-        if( value < 0 ){
-            value = ~value + 1; // two's complement
-        }
         return new AsnlUint( len, value );
     }
 }
@@ -125,7 +122,6 @@ class AsnlString {
 
     static fromAsnl( buffer ){
         var len = buffer[0];
-        console.log( "parsing STRING of size " + len, buffer );
         var charArray = buffer.slice( 1, len + 1 ).map( ( b ) => String.fromCharCode( b ) );
         return new AsnlString( charArray.join( "" ) );
     }
