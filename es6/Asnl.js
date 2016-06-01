@@ -38,6 +38,13 @@ class AsnlStruct {
         return meta.concat( values );
     }
 
+    toString(){
+        var s = "{";
+        s += this.array.map( obj =>obj.toString() ).join( ", " );
+        s += "}";
+        return s;
+    }
+
     static fromAsnl( buffer ){
         var len = buffer[0];
         var cursor = 1;
@@ -78,6 +85,10 @@ class AsnlInt {
         return meta.concat( intToByteArray( this.value, this.len ) );
     }
 
+    toString(){
+        return `I${this.len}:${this.value}`;
+    }
+
     static fromAsnl( buffer ){
         var len = buffer[0];
         var value = byteArrayToInt( buffer.slice( 1 ), len );
@@ -106,6 +117,10 @@ class AsnlUint {
         var value = byteArrayToInt( buffer.slice( 1 ), len );
         return new AsnlUint( len, value );
     }
+
+    toString(){
+        return `U${this.len}:${this.value}`;
+    }
 }
 
 class AsnlString {
@@ -118,6 +133,10 @@ class AsnlString {
         var bytes = this.value.split( '' ).map( ( c ) => c.charCodeAt( 0 ) );
         var meta = [ASNL_TOKENS.STRING, this.len];
         return meta.concat( bytes );
+    }
+
+    toString(){
+        return "S:" + this.value;
     }
 
     static fromAsnl( buffer ){

@@ -24,8 +24,8 @@ var DEFAULT_TRANSITION = "flip over";
 serial.events.onArduinoReady.addListener( () =>{
     console.log( "arduino ready" );
     serial.setPin( "123" ).then( ( res ) =>{
-        console.log( "set pin ", res );
-        serial.dump().then( ( res ) => console.log( "dump ", res ) );
+        console.log( "set pin ", res.toString() );
+        serial.dump().then( ( res ) => console.log( "dump ", res.toString() ) );
     } );
 } );
 
