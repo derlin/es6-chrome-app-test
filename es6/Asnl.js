@@ -1,9 +1,10 @@
 const ASNL_TOKENS = {
-    INT   : 73,  // I
-    STRUCT: 123, // {
-    UINT  : 85,  // U
-    STRING: 34,  // "
-    PROMPT: 62   // >
+    INT    : 73,  // I
+    STRUCT : 123, // {
+    UINT   : 85,  // U
+    STRING : 34,  // "
+    ENQ_IN : 62,   // >
+    ENQ_OUT: 33   // !
 };
 
 
@@ -57,7 +58,7 @@ class AsnlStruct {
             cursor += obj.len + 2;
         }
 
-        if(cursor != len+1){
+        if( cursor != len + 1 ){
             console.log( "ERROR: wrong struct size | cursor: " + cursor, buffer );
             return null;
         }
@@ -184,4 +185,4 @@ function _parseAsnl( buffer ){
 
 // ------------------------------------- export
 
-//export {ASNL_TYPES, AsnlInt, AsnlString, AsnlUint, AsnlStruct};
+export {ASNL_TOKENS, AsnlInt, AsnlString, AsnlUint, AsnlStruct, parseAsnl};
