@@ -2,7 +2,7 @@ class PortManager {
 
     constructor(){
         this._connectionInfo = null;
-        this._events = {
+        this.events = {
             onConnect   : new chrome.Event(),
             onDisconnect: new chrome.Event()
         };
@@ -31,7 +31,7 @@ class PortManager {
             let connect = () => chrome.serial.connect( selectedPort, ( connectionInfo ) =>{
                 this._ifChromeError( reject, () =>{
                     self._connectionInfo = connectionInfo;
-                    self._events.onConnect.dispatch( connectionInfo );
+                    self.events.onConnect.dispatch( connectionInfo );
                     resolve();
                 } );
             } );
@@ -52,7 +52,7 @@ class PortManager {
         return new Promise( ( resolve ) =>{
             chrome.serial.disconnect( self._connectionInfo.connectionId, () =>{
                 self._connectionInfo = null;
-                self._events.onDisconnect.dispatch();
+                self.events.onDisconnect.dispatch();
                 resolve();
             } );
 

@@ -5,16 +5,19 @@ window.$ = $;
 
 import PortManager from './PortManager.js';
 import StatusText from './StatusText.js';
-
+import Serial from './Serial.js';
+import * as asnl from './Asnl.js';
 
 // ----------------------------------------------------
 
 var pm = new PortManager();
 var portPicker = $( "#port-picker" );
 var btnConnect = $( "#connect-button" );
+var btnDisconnect = $( "#disconnect-button" );
 var btnRescan = $( "#rescan-button" );
 var shaper = $( ".shape" );
 
+var serial = null;
 var status = new StatusText( ".ui.status", "not connected", "", "unlink" );
 
 var DEFAULT_TRANSITION = "flip over";
@@ -24,6 +27,7 @@ var DEFAULT_TRANSITION = "flip over";
 shaper.shape( {} );
 portPicker.on( 'change', portSelectedChanged );
 btnConnect.on( 'click', connect );
+btnDisconnect.on( 'click', disconnect );
 btnRescan.on( 'click', rescan );
 rescan();
 
@@ -59,14 +63,24 @@ function rescan(){
 function connect(){
     status.update( "connecting", "teal", "spinner" );
     pm.connect( portPicker.val() ).then(
-        () =>{
+        (connectionInfo) =>{
+            serial = new Serial(connectionInfo);
             shaper.shape( DEFAULT_TRANSITION );
-            status.update( "connected", "green", "linkify" )
+            status.update( "connected", "green", "linkify" );
         },
         ( error ) => status.update( error, "red", "warning circle" )
     );
 }
 
+function disconnect(){
+    if(serial != null){
+        status.update("disconnected", "", "unlink");
+        serial.finalize();
+        serial = null;
+        pm.disconnect();
+        shaper.shape(DEFAULT_TRANSITION);
+    }
+}
 // ----------------------------------------------------
 
 

@@ -1,8 +1,9 @@
-const ASNL_TYPES = {
+const ASNL_TOKENS = {
     INT   : 73,  // I
     STRUCT: 123, // {
-    UINT  : 85, // U
-    STRING: 34  // "
+    UINT  : 85,  // U
+    STRING: 34,  // "
+    PROMPT: 62   // >
 };
 
 
@@ -32,7 +33,7 @@ class AsnlStruct {
             values = values.concat( asnl_obj.toAsnl() );
         } );
 
-        var meta = [ASNL_TYPES.STRUCT, values.length];
+        var meta = [ASNL_TOKENS.STRUCT, values.length];
         return meta.concat( values );
     }
 
@@ -74,7 +75,7 @@ class AsnlInt {
     }
 
     toAsnl(){
-        var meta = [ASNL_TYPES.INT, this.len];
+        var meta = [ASNL_TOKENS.INT, this.len];
         return meta.concat( intToByteArray( this.value, this.len ) );
     }
 
@@ -94,7 +95,7 @@ class AsnlUint {
     }
 
     toAsnl(){
-        var meta = [ASNL_TYPES.UINT, this.len];
+        var meta = [ASNL_TOKENS.UINT, this.len];
         return meta.concat( intToByteArray( this.value, this.len ) );
     }
 
@@ -117,7 +118,7 @@ class AsnlString {
 
     toAsnl(){
         var bytes = this.value.split( '' ).map( ( c ) => c.charCodeAt( 0 ) );
-        var meta = [ASNL_TYPES.STRING, this.len];
+        var meta = [ASNL_TOKENS.STRING, this.len];
         return meta.concat( bytes );
     }
 
@@ -156,13 +157,13 @@ function byteArrayToInt( buffer, len ){
 
 function asnlTypeToClass( type ){
     switch( type ){
-        case ASNL_TYPES.INT:
+        case ASNL_TOKENS.INT:
             return AsnlInt;
-        case ASNL_TYPES.UINT:
+        case ASNL_TOKENS.UINT:
             return AsnlUint;
-        case ASNL_TYPES.STRING:
+        case ASNL_TOKENS.STRING:
             return AsnlString;
-        case ASNL_TYPES.STRUCT:
+        case ASNL_TOKENS.STRUCT:
             return AsnlStruct;
         default:
             return null;

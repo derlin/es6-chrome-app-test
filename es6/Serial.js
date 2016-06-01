@@ -1,52 +1,61 @@
 class Serial {
 
     constructor( connectionInfo ){
-        this.connectionId = connectionInfo.connectionId;
-        this.onRead = new chrome.Event();
-        this.onError = new chrome.Event();
+        this.events = {
+            onReceive      : new chrome.Event(),
+            onReceivedError: new chrome.Event(),
+            onSendError    : new chrome.Event()
+        };
 
-        // this.boundOnReceive = this._onReceive.bind(this);
-        // this.boundOnReceiveError = this._onReceiveError.bind(this);
+        this._connectionInfo = connectionInfo;
+        this._receptionBuffer = new ArrayBuffer(255);
+        this._asnlTokenLength = -1;
 
-        chrome.serial.onReceive.addListener( this._onReceive );
-        chrome.serial.onReceiveError.addListener( this._onReceiveError );
+        var boundOnReceive = this._onReceive.bind(this);
+        var boundOnReceiveError = this._onReceiveError.bind(this);
+        chrome.serial.onReceive.addListener( boundOnReceive );
+        chrome.serial.onReceiveError.addListener( boundOnReceiveError );
+
+        console.log("serial created ", this._connectionInfo);
     }
 
     _onReceive( receiveInfo ){
+        console.log("RECEIVE ", receiveInfo);
+        if(this._asnlTokenLength < 0){
+            // new token
 
+        }
     }
 
     _onReceiveError( errorInfo ){
         if( errorInfo.connectionId === this.connectionId ){
-            this.onError.dispatch( errorInfo.error );
+            this.events.onReceivedError.dispatch( errorInfo.error );
         }
     }
 
-    send( msg ){
+    send( buffer ){
+        let self = this;
         return new Promise( ( resolve, reject ) =>{
-            chrome.serial.send( this.connectionId, this.str2ab( msg ), ( sendInfo ) =>{
-                if( sendInfo.error ) reject( sendInfo.error );
-                else resolve( sendInfo.bytesSent );
-            } );
+            if( !buffer instanceof Uint8Array ) buffer = new Uint8Array( buffer );
+            chrome.serial.send(
+                self._connectionInfo.connectionId,
+                buffer,
+                ( sendInfo ) =>{
+                    if( sendInfo.error ){
+                        self.events.onSendError.dispatch( sendInfo.error );
+                        reject( sendInfo.error );
+                    }else{
+                        resolve( sendInfo.bytesSent );
+                    }
+                } );
         } );
     }
 
-    /* Interprets an ArrayBuffer as UTF-8 encoded string data. */
-    static ab2str( buf ){
-        var bufView = new Uint8Array( buf );
-        var encodedString = String.fromCharCode.apply( null, bufView );
-        return decodeURIComponent( escape( encodedString ) );
-    };
+    finalize(){
+        chrome.serial.onReceive.removeListener( this._onReceive );
+        chrome.serial.onReceiveError.removeListener( this._onReceiveError );
+    }
 
-    /* Converts a string to UTF-8 encoding in a Uint8Array; returns the array buffer. */
-    static str2ab( str ){
-        var encodedString = unescape( encodeURIComponent( str ) );
-        var bytes = new Uint8Array( encodedString.length );
-        for( var i = 0; i < encodedString.length; ++i ){
-            bytes[i] = encodedString.charCodeAt( i );
-        }
-        return bytes.buffer;
-    };
 }
 
 export default Serial;
