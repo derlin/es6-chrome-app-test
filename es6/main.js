@@ -2,6 +2,23 @@ var $ = require( "jquery" );
 $.fn.shape = require( 'semantic-ui-shape' );
 window.$ = $;
 
+// ------------------ jquery semantic buttons
+
+$.fn.uiDisable = function(){
+    $( this[0] ).addClass( "disabled" );
+};
+
+$.fn.uiEnable = function(){
+    $( this[0] ).removeClass( "disabled" );
+};
+
+$.fn.uiToggle = function(){
+    if( $( this[0] ).hasClass( "disabled" ) ){
+        $( this ).uiDisable();
+    }else{
+        $( this ).uiEnable();
+    }
+};
 
 import WolfSerial from './WolfSerial.js';
 import StatusText from './StatusText.js';
@@ -54,22 +71,22 @@ function createPortPicker( ports ){
         portPicker.append( $( option ) );
     } );
 
-    btnRescan.removeClass( "disabled" );
-    if( ports.length > 0 )   btnConnect.removeClass( "disabled" );
+    btnRescan.uiEnable();
+    if( ports.length > 0 )   btnConnect.uiEnable();
 
 }
 
 function portSelectedChanged(){
     if( portPicker.val() ){
-        btnConnect.removeClass( "disabled" );
+        btnConnect.uiEnable();
     }else{
-        btnConnect.addClass( "disabled" );
+        btnConnect.uiDisable();
     }
 }
 
 function rescan(){
-    btnConnect.addClass( "disabled" );
-    btnRescan.addClass( "disabled" );
+    btnConnect.uiDisable();
+    btnRescan.uiDisable();
     serial.scanPorts().then( createPortPicker );
 }
 
