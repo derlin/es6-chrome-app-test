@@ -54,7 +54,6 @@
     right: 15px;
 }
 
-
 #dimmer {
     text-align: center;
     position: absolute;
@@ -65,4 +64,18 @@
     background: white;
     z-index: 100;
     display: none;
+}
+
+#console {
+    margin-top: 20px;
+    padding: 7px;
+    background: white;
+    border-radius: 7px;
+    font-style: italic;
+    font-family: monospace;
+}
+
+#console span {
+    /*margin-right: 8px;*/
+    display: block;
 }
