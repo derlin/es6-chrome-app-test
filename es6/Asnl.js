@@ -24,13 +24,13 @@ function parseAsnl( buffer ){
 class AsnlStruct {
 
     constructor( array, length ){
-        this.array = array;
+        this.value = array;
         this.len = length || -1;
     }
 
     toAsnl(){
         var values = [];
-        this.array.map( ( asnl_obj ) =>{
+        this.value.map( ( asnl_obj ) =>{
             values = values.concat( asnl_obj.toAsnl() );
         } );
 
@@ -40,7 +40,7 @@ class AsnlStruct {
 
     toString(){
         var s = "{";
-        s += this.array.map( obj =>obj.toString() ).join( ", " );
+        s += this.value.map( obj =>obj.toString() ).join( ", " );
         s += "}";
         return s;
     }

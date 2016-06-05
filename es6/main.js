@@ -12,57 +12,102 @@ $.fn.uiEnable = function(){
     $( this[0] ).removeClass( "disabled" );
 };
 
-$.fn.uiToggle = function(){
-    if( $( this[0] ).hasClass( "disabled" ) ){
-        $( this ).uiDisable();
-    }else{
+$.fn.uiXXable = function( enable ){
+    if( enable ){
         $( this ).uiEnable();
+    }else{
+        $( this ).uiDisable();
     }
 };
 
 import WolfSerial from './WolfSerial.js';
 import StatusText from './StatusText.js';
 
-// ----------------------------------------------------
+
+// ----- vars
 
 var serial = new WolfSerial();
-var portPicker = $( "#port-picker" );
-var btnConnect = $( "#connect-button" );
-var btnDisconnect = $( "#disconnect-button" );
-var btnRescan = $( "#rescan-button" );
+
 var shaper = $( ".shape" );
+shaper.flip = () =>{
+    shaper.shape( "flip over" );
+};
 
 
 var status = new StatusText( ".ui.status", "not connected", "", "unlink" );
 
-var DEFAULT_TRANSITION = "flip over";
 
+var portPicker = $( "#port-picker" );
+var btnConnect = $( "#connect-button" );
+var btnRescan = $( "#rescan-button" );
 
-serial.events.onArduinoReady.addListener( () =>{
-    console.log( "arduino ready" );
-    serial.setPin( "123" ).then( ( res ) =>{
-        console.log( "set pin ", res.toString() );
-        serial.dump().then( ( res ) => console.log( "dump ", res.toString() ) );
-    } );
-} );
+var btnDisconnect = $( "#disconnect-button" );
+var btnSubmit = $( "#submit-button" );
+var inputs = $( 'input' );
+var inputPin = $( 'input[name="pincode"]' );
+var inputDi = $( 'input[name="di"]' );
+var inputDf = $( 'input[name="df"]' );
+var lastDump = null;
 
-serial.events.onConnect.addListener( () =>{
-    console.log( "connect event received" );
-} );
+var dimmer = $( '#dimmer' );
+var dimmerText = dimmer.find( '.status' );
+var dimmerBtn = dimmer.find( '.button' );
 
-serial.events.onDisconnect.addListener( () =>{
-    console.log( "disconnect event received" );
-} );
-// ----------------------------------------------------
+var consoleArea = {
+    clear : () =>{
+        $( '#console' ).html( "" );
+    },
+    update: ( text ) =>{
+        $('#console').html( `<span>${text}<br /></span>` );
+    },
+    append: ( text ) =>{
+        $( '#console' ).append( `<span>${text}<br /></span>` );
+    }
+};
+
+// ------ init
 
 shaper.shape( {} );
 portPicker.on( 'change', portSelectedChanged );
 btnConnect.on( 'click', connect );
 btnDisconnect.on( 'click', disconnect );
 btnRescan.on( 'click', rescan );
+btnSubmit.on( 'click', submit );
+dimmerBtn.on( 'click', () => dimmer.hide() );
+inputs.on( 'keyup', inputChanged );
 rescan();
 
 
+// ----- serial events
+
+serial.events.onConnect.addListener( () =>{
+    status.update( "initiating talk with the Arduino", "orange", "sign in" );
+    serial.initiateArduinoTalk();
+} );
+
+serial.events.onArduinoReady.addListener( () =>{
+    status.update( "connected", "green", "linkify" );
+    consoleArea.clear();
+    inputs.prop( 'disabled', true );
+    shaper.flip();
+    serial.dump().then( initForm );
+} );
+
+
+serial.events.onDisconnect.addListener( () =>{
+    status.update( "disconnected", "", "unlink" );
+    shaper.flip();
+    rescan();
+} );
+
+
+// -------- port picker management
+
+function rescan(){
+    btnConnect.uiDisable();
+    btnRescan.uiDisable();
+    serial.scanPorts().then( createPortPicker );
+}
 function createPortPicker( ports ){
     portPicker.html( "" ); // clear
     ports.forEach( ( port ) =>{
@@ -77,40 +122,76 @@ function createPortPicker( ports ){
 }
 
 function portSelectedChanged(){
-    if( portPicker.val() ){
-        btnConnect.uiEnable();
-    }else{
-        btnConnect.uiDisable();
-    }
+    btnConnect.uiXXable( portPicker.val() );
 }
 
-function rescan(){
-    btnConnect.uiDisable();
-    btnRescan.uiDisable();
-    serial.scanPorts().then( createPortPicker );
-}
-
+// ---------- connect/disconnect
 
 function connect(){
     status.update( "connecting", "teal", "spinner" );
     serial.connect( portPicker.val() ).then(
         ( connectionInfo ) =>{
-            shaper.shape( DEFAULT_TRANSITION );
-            status.update( "connected", "green", "linkify" );
-            serial.initiateArduinoTalk();
+
         },
         ( error ) => status.update( error, "red", "warning circle" )
     );
 }
 
 function disconnect(){
-    if( serial != null ){
-        status.update( "disconnected", "", "unlink" );
-        serial.disconnect();
-        shaper.shape( DEFAULT_TRANSITION );
+    serial.disconnect();
+}
+
+
+// ------------- form management
+
+function initForm( asnlDump ){
+    console.log( "dump result", asnlDump );
+    var error = asnlDump.value[0];
+    var struct = asnlDump.value[1];
+
+    if( error.value == 0 ){
+        status.update( "error getting info from Arduino", "red", "warning circle" );
+    }else{
+        lastDump = struct.value;
+        inputPin.val( lastDump[0].value );
+        inputDi.val( lastDump[1].value );
+        inputDf.val( lastDump[2].value );
+        inputs.prop( "disabled", false );
+        inputChanged(); // check new values
     }
 }
-// ----------------------------------------------------
+
+function inputChanged(){
+    var valid = true;
+    $.each( inputs, ( idx, input ) =>{
+        console.log( input, input.validity, valid );
+        valid = valid && input.validity.valid;
+    } );
+
+    btnSubmit.uiXXable( valid );
+}
 
 
+// ---------- submit
+
+function submit(){
+    if( inputPin.val() == lastDump[0].value &&
+        inputDi.val() == lastDump[1].value &&
+        inputDf.val() == lastDump[2].value ){
+        consoleArea.update( "no changes" );
+        return;
+    }
+
+    var cb = ( result, cmd ) =>{
+        console.log( result );
+        var err = result.value;
+        consoleArea.append( `set ${cmd} : ` + (err == 0 ? 'failed' : 'success.') );
+    };
+
+    consoleArea.clear();
+    serial.setPin( inputPin.val() ).then( ( results ) => cb( results, "pin" ) );
+    serial.setDi( inputDi.val() ).then( ( results ) => cb( results, " di" ) );
+    serial.setDf( inputDf.val() ).then( ( results ) => cb( results, " df" ) );
+
+}
 

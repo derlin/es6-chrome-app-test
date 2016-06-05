@@ -176,6 +176,22 @@ class WolfSerial {
         } );
     }
 
+    setDi( di ){
+        var self = this;
+        return new Promise( function( resolve, reject ){
+            var msg = new asnl.AsnlStruct( [new asnl.AsnlInt( "i".charCodeAt( 0 ), 1 ), new asnl.AsnlInt( di, 2)] ).toAsnl();
+            self._send( msg ).then( () => self._receiveQueue.push( resolve ), reject );
+        } );
+    }
+
+    setDf( df ){
+        var self = this;
+        return new Promise( function( resolve, reject ){
+            var msg = new asnl.AsnlStruct( [new asnl.AsnlInt( "f".charCodeAt( 0 ), 1 ), new asnl.AsnlInt( df, 2)] ).toAsnl();
+            self._send( msg ).then( () => self._receiveQueue.push( resolve ), reject );
+        } );
+    }
+
     dump(){
         var self = this;
         return new Promise( function( resolve, reject ){
