@@ -10,6 +10,13 @@
 
 <body>
 <div id="window">
+    <div id="dimmer">
+        <img src="assets/please_wait.gif" style="max-height: 30%">
+        <div class="status"></div>
+        <div>
+            <button id="dimmer-close" class="ui blue inverted button">ok</button>
+        </div>
+    </div>
     <div class="container">
 
         <div class="ui text shape">
@@ -39,7 +46,7 @@
 
                 <div class="side">
                     <h1 class="side-title">Wolves Setup</h1>
-                    <div class="ui form">
+                    <form class="ui form">
                         <div class="field">
                             <label>Status</label>
                             <span class="status ui fluid label"></span>
@@ -47,17 +54,17 @@
 
                         <div class="field">
                             <label>PIN Code</label>
-                            <input type="text" name="pincode" placeholder="Pin Code (1234)">
+                            <input type="text" name="pincode" placeholder="Pin Code (1234)" required>
                         </div>
                         <div class="field">
                             <label>Duration of Feedback (in ms)</label>
-                            <input type="text" name="df" placeholder="Duration of Feedback">
+                            <input type="number" name="df" placeholder="Duration of Feedback" min="100" required>
                         </div>
                         <div class="field">
                             <label>Durtion of Impuls (in ms)</label>
-                            <input type="text" name="di" placeholder="Durtion of Impuls">
+                            <input type="number" name="di" placeholder="Durtion of Impuls" min="100" required>
                         </div>
-                    </div>
+                    </form>
                     <div class="btn-group">
                         <button id="disconnect-button" class="ui blue submit button">Disconnect</button>
                         <button id="submit-button" class="ui blue submit disabled button">Submit</button>
