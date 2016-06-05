@@ -4,6 +4,7 @@
 <head>
     <link rel="stylesheet" type="text/css" href="/css/fonts.css">
     <link rel="stylesheet" type="text/css" href="/vendor/semantic/dist/semantic.min.css">
+    <link href="vendor/toastr/toastr.min.css" rel="stylesheet"/>
     <link rel="stylesheet" type="text/css" href="/css/app.css">
 
 </head>
@@ -51,15 +52,14 @@
                             <input type="text" name="pincode" placeholder="Pin Code (1234)" required>
                         </div>
                         <div class="field">
-                            <label>Duration of Feedback (in ms)</label>
+                            <label>DF - duration of Feedback (in ms)</label>
                             <input type="number" name="df" placeholder="Duration of Feedback" min="100" required>
                         </div>
                         <div class="field">
-                            <label>Durtion of Impuls (in ms)</label>
+                            <label>DI - duration of Impulsion (in ms)</label>
                             <input type="number" name="di" placeholder="Durtion of Impuls" min="100" required>
                         </div>
                     </form>
-                    <div id="console"></div>
                     <div class="btn-group">
                         <button id="disconnect-button" class="ui blue submit button">Disconnect</button>
                         <button id="submit-button" class="ui blue submit disabled button">Submit</button>

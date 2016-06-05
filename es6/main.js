@@ -2,6 +2,13 @@ var $ = require( "jquery" );
 $.fn.shape = require( 'semantic-ui-shape' );
 window.$ = $;
 
+import WolfSerial from './WolfSerial.js';
+import StatusText from './StatusText.js';
+
+var toastr = require( 'toastr' );
+toastr.options.closeMethod = 'fadeOut';
+toastr.options.closeDuration = 300;
+
 // ------------------ jquery semantic buttons
 
 $.fn.uiDisable = function(){
@@ -20,9 +27,6 @@ $.fn.uiXXable = function( enable ){
     }
 };
 
-import WolfSerial from './WolfSerial.js';
-import StatusText from './StatusText.js';
-
 
 // ----- vars
 
@@ -33,9 +37,7 @@ shaper.flip = () =>{
     shaper.shape( "flip over" );
 };
 
-
 var status = new StatusText( ".ui.status", "not connected", "", "unlink" );
-
 
 var portPicker = $( "#port-picker" );
 var btnConnect = $( "#connect-button" );
@@ -49,22 +51,6 @@ var inputDi = $( 'input[name="di"]' );
 var inputDf = $( 'input[name="df"]' );
 var lastDump = null;
 
-var dimmer = $( '#dimmer' );
-var dimmerText = dimmer.find( '.status' );
-var dimmerBtn = dimmer.find( '.button' );
-
-var consoleArea = {
-    clear : () =>{
-        $( '#console' ).html( "" );
-    },
-    update: ( text ) =>{
-        $('#console').html( `<span>${text}<br /></span>` );
-    },
-    append: ( text ) =>{
-        $( '#console' ).append( `<span>${text}<br /></span>` );
-    }
-};
-
 // ------ init
 
 shaper.shape( {} );
@@ -73,7 +59,6 @@ btnConnect.on( 'click', connect );
 btnDisconnect.on( 'click', disconnect );
 btnRescan.on( 'click', rescan );
 btnSubmit.on( 'click', submit );
-dimmerBtn.on( 'click', () => dimmer.hide() );
 inputs.on( 'keyup', inputChanged );
 rescan();
 
@@ -87,7 +72,6 @@ serial.events.onConnect.addListener( () =>{
 
 serial.events.onArduinoReady.addListener( () =>{
     status.update( "connected", "green", "linkify" );
-    consoleArea.clear();
     inputs.prop( 'disabled', true );
     shaper.flip();
     serial.dump().then( initForm );
@@ -98,6 +82,24 @@ serial.events.onDisconnect.addListener( () =>{
     status.update( "disconnected", "", "unlink" );
     shaper.flip();
     rescan();
+} );
+
+serial.events.onError.addListener( ( error ) =>{
+    console.log( "ERROR", error );
+    switch( error.type ){
+        case WolfSerial.ErrorTypes.SERIAL:
+            disconnect();
+            setTimeout( () => toastr.error( error.msg ), 1000 );
+            break;
+
+        case WolfSerial.ErrorTypes.ARDUINO:
+            status.update( "connection failed", "", "unlink" );
+            break;
+
+        default:
+            toastr.error( error.msg );
+
+    }
 } );
 
 
@@ -118,7 +120,6 @@ function createPortPicker( ports ){
 
     btnRescan.uiEnable();
     if( ports.length > 0 )   btnConnect.uiEnable();
-
 }
 
 function portSelectedChanged(){
@@ -130,9 +131,8 @@ function portSelectedChanged(){
 function connect(){
     status.update( "connecting", "teal", "spinner" );
     serial.connect( portPicker.val() ).then(
-        ( connectionInfo ) =>{
-
-        },
+        () =>{
+        }, // see the connect event
         ( error ) => status.update( error, "red", "warning circle" )
     );
 }
@@ -152,10 +152,14 @@ function initForm( asnlDump ){
     if( error.value == 0 ){
         status.update( "error getting info from Arduino", "red", "warning circle" );
     }else{
-        lastDump = struct.value;
-        inputPin.val( lastDump[0].value );
-        inputDi.val( lastDump[1].value );
-        inputDf.val( lastDump[2].value );
+        lastDump = {
+            pin: struct.value[0].value,
+            df : struct.value[1].value,
+            di : struct.value[2].value
+        };
+        inputPin.val( lastDump.pin );
+        inputDi.val( lastDump.di );
+        inputDf.val( lastDump.df );
         inputs.prop( "disabled", false );
         inputChanged(); // check new values
     }
@@ -164,7 +168,6 @@ function initForm( asnlDump ){
 function inputChanged(){
     var valid = true;
     $.each( inputs, ( idx, input ) =>{
-        console.log( input, input.validity, valid );
         valid = valid && input.validity.valid;
     } );
 
@@ -175,23 +178,35 @@ function inputChanged(){
 // ---------- submit
 
 function submit(){
-    if( inputPin.val() == lastDump[0].value &&
-        inputDi.val() == lastDump[1].value &&
-        inputDf.val() == lastDump[2].value ){
-        consoleArea.update( "no changes" );
+    if( inputPin.val() == lastDump.pin &&
+        inputDi.val() == lastDump.di &&
+        inputDf.val() == lastDump.df ){
+        toastr.info( "no changes to save." );
         return;
     }
 
-    var cb = ( result, cmd ) =>{
-        console.log( result );
-        var err = result.value;
-        consoleArea.append( `set ${cmd} : ` + (err == 0 ? 'failed' : 'success.') );
-    };
+    serial.setPin( inputPin.val() ).then( ( results ) => submitCallback( results, "pin", inputPin.val() ) );
+    serial.setDi( inputDi.val() ).then( ( results ) => submitCallback( results, " di", inputDi.val() ) );
+    serial.setDf( inputDf.val() ).then( ( results ) => submitCallback( results, " df", inputDf.val() ) );
+}
 
-    consoleArea.clear();
-    serial.setPin( inputPin.val() ).then( ( results ) => cb( results, "pin" ) );
-    serial.setDi( inputDi.val() ).then( ( results ) => cb( results, " di" ) );
-    serial.setDf( inputDf.val() ).then( ( results ) => cb( results, " df" ) );
+var submitErrors = [];
+var submitCnt = 0;
 
+function submitCallback( result, cmd, val ){
+    console.log( result );
+    if( result.value == 0 ) submitErrors.push( cmd );
+    else lastDump[cmd] =
+        submitCnt++;
+    if( submitCnt == 3 ){
+        submitCnt = 0;
+        if( submitErrors.length == 0 ){
+            toastr.success( "arduino updated." );
+            lastDump[cmd] = val;
+        }else{
+            toastr.error( "some commands failed : " + errors.join( ", " ) + "..." );
+            submitErrors = [];
+        }
+    }
 }
 
