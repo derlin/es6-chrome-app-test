@@ -82,7 +82,7 @@ serial.events.onConnect.addListener( () =>{
 serial.events.onArduinoReady.addListener( () =>{
     status.update( "connected", "green", "linkify" );
     shaper.flip();
-    serial.ask( WolfSerial.Commands.Dump ).then( initForm );
+    serial.ask(WolfSerial.Commands.Dump).then( initForm );
 } );
 
 
