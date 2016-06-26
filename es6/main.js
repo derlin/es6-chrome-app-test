@@ -4,6 +4,8 @@ window.$ = $;
 
 import WolfSerial from './WolfSerial.js';
 import StatusText from './StatusText.js';
+import BoundInput from './BoundInput.js';
+import ColorBoundInput from './ColorBoundInput.js';
 
 var toastr = require( 'toastr' );
 toastr.options.closeMethod = 'fadeOut';
@@ -45,11 +47,18 @@ var btnRescan = $( "#rescan-button" );
 
 var btnDisconnect = $( "#disconnect-button" );
 var btnSubmit = $( "#submit-button" );
-var inputs = $( 'input' );
-var inputPin = $( 'input[name="pincode"]' );
-var inputDi = $( 'input[name="di"]' );
-var inputDf = $( 'input[name="df"]' );
-var lastDump = null;
+
+var $inputs = $( 'input' );
+var offset = 0;
+var inputs = [
+    new BoundInput( offset++, 'input[name="pincode"]', WolfSerial.SetCommands.PIN ),
+    new BoundInput( offset++, 'input[name="di"]', WolfSerial.SetCommands.DI ),
+    new BoundInput( offset++, 'input[name="df"]', WolfSerial.SetCommands.DF ),
+    new ColorBoundInput( offset++, 'input[name="idle_color_on"]', WolfSerial.SetCommands.ColorOn ),
+    new ColorBoundInput( offset++, 'input[name="idle_color_off"]', WolfSerial.SetCommands.ColorOff ),
+    // new BoundInput( offset++, 'input[name="idle_ticks_on"]', WolfSerial.SetCommands.TicksOn ),
+    // new BoundInput( offset++, 'input[name="idle_ticks_off"]', WolfSerial.SetCommands.TicksOff ),
+];
 
 // ------ init
 
@@ -59,7 +68,7 @@ btnConnect.on( 'click', connect );
 btnDisconnect.on( 'click', disconnect );
 btnRescan.on( 'click', rescan );
 btnSubmit.on( 'click', submit );
-inputs.on( 'keyup', inputChanged );
+$inputs.on( 'keyup', inputChanged );
 rescan();
 
 
@@ -72,9 +81,8 @@ serial.events.onConnect.addListener( () =>{
 
 serial.events.onArduinoReady.addListener( () =>{
     status.update( "connected", "green", "linkify" );
-    inputs.prop( 'disabled', true );
     shaper.flip();
-    serial.dump().then( initForm );
+    serial.ask( WolfSerial.Commands.Dump ).then( initForm );
 } );
 
 
@@ -151,26 +159,18 @@ function initForm( asnlDump ){
 
     if( error.value == 0 ){
         status.update( "error getting info from Arduino", "red", "warning circle" );
+
     }else{
-        lastDump = {
-            pin: struct.value[0].value,
-            df : struct.value[1].value,
-            di : struct.value[2].value
-        };
-        inputPin.val( lastDump.pin );
-        inputDi.val( lastDump.di );
-        inputDf.val( lastDump.df );
-        inputs.prop( "disabled", false );
+        inputs.forEach( input => input.set( struct.value ) );
         inputChanged(); // check new values
     }
 }
 
 function inputChanged(){
     var valid = true;
-    $.each( inputs, ( idx, input ) =>{
-        valid = valid && input.validity.valid;
+    inputs.forEach( input =>{
+        valid = valid && input.isValid();
     } );
-
     btnSubmit.uiXXable( valid );
 }
 
@@ -178,35 +178,47 @@ function inputChanged(){
 // ---------- submit
 
 function submit(){
-    if( inputPin.val() == lastDump.pin &&
-        inputDi.val() == lastDump.di &&
-        inputDf.val() == lastDump.df ){
+
+    var changed = false;
+    inputs.forEach( input =>{
+        changed = changed || input.hasChanged();
+    } );
+
+    if( !changed ){
         toastr.info( "no changes to save." );
         return;
     }
 
-    serial.setPin( inputPin.val() ).then( ( results ) => submitCallback( results, "pin", inputPin.val() ) );
-    serial.setDi( inputDi.val() ).then( ( results ) => submitCallback( results, " di", inputDi.val() ) );
-    serial.setDf( inputDf.val() ).then( ( results ) => submitCallback( results, " df", inputDf.val() ) );
+    var errors = [];
+    inputs.forEach( input =>{
+        serial.set( input.serialCommand(), input.get() ).then( result =>{
+            // check for errors
+            if( result.value == 0 ){
+                errors.push( input.id() );
+            }
+
+            // if last input of the list
+            if( input.id() == inputs.length - 1 ){
+                if( errors.length ){
+                    toastr.error( "some commands failed : " + errors.join( ", " ) + "..." );
+                }else{
+                    save();
+                }
+            }
+        } );
+    } );
 }
 
-var submitErrors = [];
-var submitCnt = 0;
-
-function submitCallback( result, cmd, val ){
-    console.log( result );
-    if( result.value == 0 ) submitErrors.push( cmd );
-    else lastDump[cmd] =
-        submitCnt++;
-    if( submitCnt == 3 ){
-        submitCnt = 0;
-        if( submitErrors.length == 0 ){
-            toastr.success( "arduino updated." );
-            lastDump[cmd] = val;
-        }else{
-            toastr.error( "some commands failed : " + errors.join( ", " ) + "..." );
-            submitErrors = [];
+function save(){
+    serial.ask( WolfSerial.Commands.Save ).then( result =>{
+            if( result.value == 0 ){
+                toastr.error( "Final save command failed..." );
+            }else{
+                // finally, everything ok:
+                inputs.forEach( input => input.save() );
+                toastr.success( "Arduino updated." );
+            }
         }
-    }
+    );
 }
 

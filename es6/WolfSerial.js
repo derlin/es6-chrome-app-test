@@ -17,6 +17,22 @@ class WolfSerial {
         SEND   : "send error"
     };
 
+    static Commands = {
+        Dump: {nice: "dump current values", code: "d".charCodeAt( 0 )},
+        Save: {nice: "save to EEPROM", code: "s".charCodeAt( 0 )},
+        Quit: {nice: "Quit configuration mode", code: "x".charCodeAt( 0 )},
+    };
+
+    static SetCommands = {
+        DI      : {nice: "set DI", code: "i".charCodeAt( 0 ), asnl: ( val ) => new asnl.AsnlInt( val, 2 )},
+        DF      : {nice: "set DF", code: "f".charCodeAt( 0 ), asnl: ( val ) => new asnl.AsnlInt( val, 2 )},
+        PIN     : {nice: "set pin", code: "p".charCodeAt( 0 ), asnl: ( val ) => new asnl.AsnlString( val )},
+        ColorOn : {nice: "set color ON", code: "l".charCodeAt( 0 ), asnl: ( val ) => new asnl.AsnlInt( val, 4 )},
+        ColorOff: {nice: "set color OFF", code: "m".charCodeAt( 0 ), asnl: ( val ) => new asnl.AsnlInt( val, 4 )},
+        TicksOn : {nice: "set ticks ON", code: "1".charCodeAt( 0 ), asnl: ( val ) => new asnl.AsnlInt( val, 2 )},
+        TicksOff: {nice: "set ticks OFF", code: "0".charCodeAt( 0 ), asnl: ( val ) => new asnl.AsnlInt( val, 2 )},
+    };
+
     constructor(){
         this.connectionInfo = null;
         this.state = WolfSerial.States.NOT_CONNECTED;
@@ -215,6 +231,22 @@ class WolfSerial {
     }
 
     // ----------------------------------------------------
+
+    set( setCommand, value ){
+        var self = this;
+        return new Promise( function( resolve, reject ){
+            var msg = new asnl.AsnlStruct( [new asnl.AsnlInt( setCommand.code, 1 ), setCommand.asnl( value )] ).toAsnl();
+            self._send( msg ).then( () => self._receiveQueue.push( resolve ), reject );
+        } );
+    }
+
+    ask( command ){
+        var self = this;
+        return new Promise( function( resolve, reject ){
+            var msg = new asnl.AsnlStruct( [new asnl.AsnlInt( command.code, 1 )] ).toAsnl();
+            self._send( msg ).then( () => self._receiveQueue.push( resolve ), reject );
+        } );
+    }
 
     setPin( pin ){
         var self = this;

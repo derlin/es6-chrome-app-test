@@ -17,7 +17,8 @@ module.exports = {
     },
     resolve: {
         alias: {
-            'jquery': path.join( __dirname, 'chrome-app/vendor/jquery-2.2.3.min.js' )
+            'jquery': path.join( __dirname, 'chrome-app/vendor/jquery-2.2.3.min.js' ),
+            'spectrum': path.join( __dirname, 'chrome-app/vendor/spectrum/spectrum.js' )
         }
     },
     plugins: [
