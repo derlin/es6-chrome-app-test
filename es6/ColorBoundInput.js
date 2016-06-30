@@ -16,6 +16,10 @@ class ColorBoundInput extends BoundInput {
 
     }
 
+    isValid(){
+        return true;
+    }
+
     get(){
         var value = this.input.spectrum( "get" ).toHex();
         return parseInt( value, 16 );

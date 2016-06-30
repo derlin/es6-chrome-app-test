@@ -1,3 +1,5 @@
+// TODO : submit button + colors grey + x on quit
+
 var $ = require( "jquery" );
 $.fn.shape = require( 'semantic-ui-shape' );
 window.$ = $;
@@ -56,8 +58,8 @@ var inputs = [
     new BoundInput( offset++, 'input[name="df"]', WolfSerial.SetCommands.DF ),
     new ColorBoundInput( offset++, 'input[name="idle_color_on"]', WolfSerial.SetCommands.ColorOn ),
     new ColorBoundInput( offset++, 'input[name="idle_color_off"]', WolfSerial.SetCommands.ColorOff ),
-    // new BoundInput( offset++, 'input[name="idle_ticks_on"]', WolfSerial.SetCommands.TicksOn ),
-    // new BoundInput( offset++, 'input[name="idle_ticks_off"]', WolfSerial.SetCommands.TicksOff ),
+    new BoundInput( offset++, 'input[name="idle_ticks_on"]', WolfSerial.SetCommands.TicksOn ),
+    new BoundInput( offset++, 'input[name="idle_ticks_off"]', WolfSerial.SetCommands.TicksOff ),
 ];
 
 // ------ init
@@ -171,7 +173,7 @@ function inputChanged(){
     inputs.forEach( input =>{
         valid = valid && input.isValid();
     } );
-    btnSubmit.uiXXable( valid );
+    btnSubmit.uiXXable( true );//valid ); // TODO
 }
 
 
