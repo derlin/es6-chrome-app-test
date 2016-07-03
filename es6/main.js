@@ -37,9 +37,22 @@ $.fn.uiXXable = function( enable ){
 var serial = new WolfSerial();
 
 var shaper = $( ".shape" );
-shaper.flip = () =>{
-    shaper.shape( "flip over" );
+shaper.state = 0; // 0 = init, 1 = connected panel
+
+shaper.welcomePanel = () =>{
+    if(shaper.state != 0) {
+        shaper.shape( "flip over" );
+        shaper.state = 0;
+    }
 };
+
+shaper.connectPanel = () =>{
+    if(shaper.state != 1) {
+        shaper.shape( "flip over" );
+        shaper.state = 1;
+    }
+};
+
 
 var status = new StatusText( ".ui.status", "not connected", "", "unlink" );
 
@@ -70,7 +83,7 @@ btnConnect.on( 'click', connect );
 btnDisconnect.on( 'click', disconnect );
 btnRescan.on( 'click', rescan );
 btnSubmit.on( 'click', submit );
-$inputs.on( 'keyup', inputChanged );
+$inputs.on( 'change', inputChanged );
 rescan();
 
 
@@ -83,14 +96,14 @@ serial.events.onConnect.addListener( () =>{
 
 serial.events.onArduinoReady.addListener( () =>{
     status.update( "connected", "green", "linkify" );
-    shaper.flip();
-    serial.ask(WolfSerial.Commands.Dump).then( initForm );
+    shaper.connectPanel();
+    serial.ask( WolfSerial.Commands.Dump ).then( initForm );
 } );
 
 
 serial.events.onDisconnect.addListener( () =>{
     status.update( "disconnected", "", "unlink" );
-    shaper.flip();
+    shaper.welcomePanel();
     rescan();
 } );
 
@@ -170,46 +183,64 @@ function initForm( asnlDump ){
 
 function inputChanged(){
     var valid = true;
+    var changed = false;
+
     inputs.forEach( input =>{
         valid = valid && input.isValid();
+        changed = changed || input.hasChanged();
     } );
-    btnSubmit.uiXXable( true );//valid ); // TODO
+
+    btnSubmit.uiXXable( valid && changed ); // TODO
 }
 
 
 // ---------- submit
 
+
 function submit(){
+    processInput( inputs[0] );
+}
 
-    var changed = false;
-    inputs.forEach( input =>{
-        changed = changed || input.hasChanged();
-    } );
-
-    if( !changed ){
-        toastr.info( "no changes to save." );
+function processInput( input ){
+    console.log( "processing input ", input );
+    // input didn't change: skip it
+    if( !input.hasChanged() ){
+        // if last input of the list
+        if( input.id() == inputs.length - 1 ){
+            // everything went fine, send the save command
+            save();
+        }else{
+            // some more inputs, launch the next one
+            processInput( inputs[input.id() + 1] );
+        }
         return;
     }
 
-    var errors = [];
-    inputs.forEach( input =>{
-        serial.set( input.serialCommand(), input.get() ).then( result =>{
-            // check for errors
-            if( result.value == 0 ){
-                errors.push( input.id() );
-            }
+    // input changed: launch the update
+    serial.set( input.serialCommand(), input.get() ).then( result =>{
 
-            // if last input of the list
-            if( input.id() == inputs.length - 1 ){
-                if( errors.length ){
-                    toastr.error( "some commands failed : " + errors.join( ", " ) + "..." );
-                }else{
-                    save();
-                }
-            }
-        } );
+        // if an error, abort.
+        if( result.value == 0 ){
+            console.log( "error", input.serialCommand().nice );
+            toastr.error( "command " + input.serialCommand().nice + " failed : " + e + ". Aborting." );
+            return;
+        }
+        console.log( "ok", input.serialCommand().nice );
+
+        // if last input of the list
+        if( input.id() == inputs.length - 1 ){
+            // everything went fine, send the save command
+            save();
+        }else{
+            // some more inputs, launch the next one
+            processInput( inputs[input.id() + 1] );
+        }
+    }, ( e ) =>{ // send error
+        // abort
+        toastr.error( "command " + input.serialCommand().nice + " failed : " + e + ". Aborting." );
     } );
 }
+
 
 function save(){
     serial.ask( WolfSerial.Commands.Save ).then( result =>{
@@ -219,6 +250,7 @@ function save(){
                 // finally, everything ok:
                 inputs.forEach( input => input.save() );
                 toastr.success( "Arduino updated." );
+                inputChanged();
             }
         }
     );

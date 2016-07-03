@@ -11,8 +11,8 @@ class ColorBoundInput extends BoundInput {
 
     set( asnlArray ){
         var i = asnlArray[this.offset].value;
-        this.savedValue = i.toString( 16 );
-        this.input.spectrum( "set", this.savedValue );
+        this.input.spectrum( "set", i.toString(16) );
+        this.savedValue = this.get();
 
     }
 

@@ -206,7 +206,7 @@ class WolfSerial {
                 var msgBytes = this._in.buffer.slice( 0, this._in.nextLength );
                 var msg = asnl.parseAsnl( msgBytes );
                 var resolve = this._receiveQueue.shift();
-                resolve( msg );
+                if(resolve) resolve( msg );
                 this._in.idx = 0;
             }
         }
@@ -220,7 +220,7 @@ class WolfSerial {
                 ( sendInfo ) =>{
                     console.log( "SENT ", sendInfo );
                     if( sendInfo.error ){
-                        console.log( "send error" );
+                        console.log( "send error", sendInfo );
 
                         reject( sendInfo.error );
                     }else{
