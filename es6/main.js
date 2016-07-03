@@ -40,14 +40,14 @@ var shaper = $( ".shape" );
 shaper.state = 0; // 0 = init, 1 = connected panel
 
 shaper.welcomePanel = () =>{
-    if(shaper.state != 0) {
+    if( shaper.state != 0 ){
         shaper.shape( "flip over" );
         shaper.state = 0;
     }
 };
 
 shaper.connectPanel = () =>{
-    if(shaper.state != 1) {
+    if( shaper.state != 1 ){
         shaper.shape( "flip over" );
         shaper.state = 1;
     }
@@ -161,7 +161,12 @@ function connect(){
 }
 
 function disconnect(){
-    serial.disconnect();
+    serial.ask( WolfSerial.Commands.Quit ).then(
+        ( e ) => serial.disconnect(),
+        ( e ) =>{
+            toastr.error( "error sending quit command (" + e + ")" );
+            serial.disconnect();
+        } );
 }
 
 
